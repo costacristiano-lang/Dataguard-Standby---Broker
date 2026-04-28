@@ -111,6 +111,12 @@ flowchart LR
 
 ## 1. Preparar o Banco Primario
 
+Query para verificar se ja esta habilitado:
+
+```sql
+SELECT force_logging FROM v$database;
+```
+
 Habilite `force logging`:
 
 ```sql
@@ -119,11 +125,9 @@ ALTER DATABASE FORCE LOGGING;
 
 Adicione `standby redo logs` no primario, preferencialmente em proporcao `n+1` e com o mesmo tamanho dos `online redo logs`:
 
-Comandos uteis:
+Query de apoio para verificar logfiles ja criados no ambiente
 
 ```sql
-SELECT force_logging FROM v$database;
-
 SELECT GROUP#, THREAD#, SEQUENCE#, BYTES, ARCHIVED, STATUS
 FROM V$STANDBY_LOG
 ORDER BY THREAD#, GROUP#;
@@ -133,12 +137,13 @@ WHERE TYPE = 'STANDBY';
 ```
 
 ```sql
--- Standard File System:
-ALTER DATABASE ADD LOGFILE THREAD 1 GROUP 5
-('/u01/app/oracle/oradata/redo05.log') SIZE 100M;
-
 -- Automatic Storage Management (ASM):
-ALTER DATABASE ADD LOGFILE THREAD 1 GROUP 5 '+DATA' SIZE 500M;
+-- Comandos para adicionar log files, criar para o mesmo numero de Thread
+-- e seguindo a sequencia dos Group ja criados.
+ALTER DATABASE ADD STANDBY LOGFILE
+  THREAD 1 GROUP 10 SIZE 1G,
+  THREAD 1 GROUP 11 SIZE 1G,
+  THREAD 1 GROUP 12 SIZE 1G;
 ```
 
 Confirme o parametro `STANDBY_FILE_MANAGEMENT`:
