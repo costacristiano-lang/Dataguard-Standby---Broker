@@ -119,9 +119,26 @@ ALTER DATABASE FORCE LOGGING;
 
 Adicione `standby redo logs` no primario, preferencialmente em proporcao `n+1` e com o mesmo tamanho dos `online redo logs`:
 
+Comandos uteis:
+
 ```sql
-ALTER DATABASE ADD STANDBY LOGFILE GROUP 4
-('/u01/app/oracle/oradata/orcldb/redo04.log') SIZE 1024M;
+SELECT force_logging FROM v$database;
+
+SELECT GROUP#, THREAD#, SEQUENCE#, BYTES, ARCHIVED, STATUS
+FROM V$STANDBY_LOG
+ORDER BY THREAD#, GROUP#;
+
+SELECT * FROM V$LOGFILE
+WHERE TYPE = 'STANDBY';
+```
+
+```sql
+-- Standard File System:
+ALTER DATABASE ADD LOGFILE THREAD 1 GROUP 5
+('/u01/app/oracle/oradata/redo05.log') SIZE 100M;
+
+-- Automatic Storage Management (ASM):
+ALTER DATABASE ADD LOGFILE THREAD 1 GROUP 5 '+DATA' SIZE 500M;
 ```
 
 Confirme o parametro `STANDBY_FILE_MANAGEMENT`:
