@@ -1,8 +1,6 @@
-# Oracle Data Guard: Physical Standby with RMAN Duplicate Active and Broker
+# Oracle Data Guard: Standby Físico com RMAN Duplicate Active e Broker
 
-[English](./README-oracle-data-guard-standby.md) | [Português (Brasil)](./README-oracle-data-guard-standby.pt-BR.md)
-
-This README mirrors the complete technical runbook in Portuguese and preserves all commands, examples, validation steps, and troubleshooting procedures for creating a physical standby with RMAN Duplicate Active and Oracle Data Guard Broker.
+[English](./README-oracle-data-guard-standby.md) | **Português (Brasil)**
 
 ![Oracle](https://img.shields.io/badge/Oracle-Data%20Guard-C74634?logo=oracle&logoColor=white)
 ![RMAN](https://img.shields.io/badge/RMAN-Duplicate%20From%20Active-1F6FEB)
@@ -15,7 +13,7 @@ Este material foi adaptado e reorganizado a partir do artigo de Lilian Barroso Y
 
 > Fonte base: [artigo original no LinkedIn](https://pt.linkedin.com/pulse/criando-um-standby-f%C3%ADsico-via-duplicate-active-e-com-lilian), publicado em 31/08/2021.
 
-## Related Documents
+## Documentos Relacionados
 
 - [Check diário pós-implementação](./README-check-diario-pos-implementacao.md)
 
@@ -31,7 +29,7 @@ Se você quer uma visão rápida do fluxo, a sequência é:
 6. Validar transporte e aplicação de redo.
 7. Testar operações como `switchover`, `failover` e `snapshot standby`.
 
-## Contents
+## Sumário
 
 - [Visão Geral](#visão-geral)
 - [Cenário de Exemplo](#cenário-de-exemplo)
@@ -54,7 +52,7 @@ Se você quer uma visão rápida do fluxo, a sequência é:
 - [Resumo](#resumo)
 - [Créditos](#créditos)
 
-## Overview
+## Visão Geral
 
 Este material descreve um procedimento prático para montar um ambiente de `Disaster Recovery (DR)` com `Oracle Data Guard`, criando um banco `standby físico` a partir do banco primário sem necessidade de backup prévio.
 
@@ -68,7 +66,7 @@ O fluxo central usa:
 > [!IMPORTANT]
 > Os comandos deste guia devem ser adaptados antes do uso em produção. Valide nomes de host, `SID`, `DB_UNIQUE_NAME`, caminhos, portas, tamanho dos redo logs, política de retenção e estratégia de backup conforme o seu ambiente.
 
-## Example Scenario
+## Cenário de Exemplo
 
 Para fins de simulação, o artigo considera:
 
@@ -84,7 +82,7 @@ Exemplos de caminhos:
 | Primário | `/u01/app/oracle/oradata/orcldb/` |
 | Standby | `/u01/app/oracle/oradata/orcldb_dg1/` |
 
-## Prerequisites
+## Pré-requisitos
 
 Antes de iniciar, valide:
 
@@ -101,7 +99,7 @@ Antes de iniciar, valide:
 | Rede | Resolução de nomes, portas e conectividade entre os servidores |
 | Senha SYS | Arquivo de senha compatível entre primário e standby |
 
-## Flow Architecture
+## Arquitetura do Fluxo
 
 ```mermaid
 flowchart LR
@@ -112,7 +110,7 @@ flowchart LR
     B -->|"Switchover / Failover / Snapshot"| D["Operações de DR"]
 ```
 
-## 1. Prepare the Primary Database
+## 1. Preparar o Banco Primário
 
 Verifique se `FORCE LOGGING` já está habilitado:
 
@@ -155,7 +153,7 @@ Configure o gerenciamento automático de arquivos no standby:
 ALTER SYSTEM SET STANDBY_FILE_MANAGEMENT=AUTO;
 ```
 
-## 2. Configure the Primary Listener
+## 2. Configurar o Listener no Primário
 
 Exemplo de `listener.ora` no servidor primário:
 
@@ -182,7 +180,7 @@ SID_LIST_LISTENER =
  )
 ```
 
-## 3. Configure the Standby Listener
+## 3. Configurar o Listener no Standby
 
 Exemplo de `listener.ora` no servidor standby:
 
@@ -209,7 +207,7 @@ SID_LIST_LISTENER =
  )
 ```
 
-## 4. Configure TNS on Both Servers
+## 4. Configurar o TNS nos Dois Servidores
 
 Exemplo de `tnsnames.ora`:
 
@@ -246,7 +244,7 @@ tnsping orcldb
 tnsping orcldb_dg1
 ```
 
-## 5. Prepare the Standby Server
+## 5. Preparar o Servidor Standby
 
 Crie um `init.ora` mínimo:
 
@@ -266,7 +264,7 @@ Suba a instância em `NOMOUNT`:
 STARTUP NOMOUNT;
 ```
 
-## 6. Run RMAN Duplicate
+## 6. Executar o RMAN Duplicate
 
 Conecte o `RMAN` ao banco primário e ao auxiliar:
 
@@ -309,7 +307,7 @@ RUN
 - `FROM ACTIVE DATABASE`: copia os datafiles diretamente da origem, sem backup prévio.
 - `DORECOVER`: opção útil quando se deseja incluir a etapa de recuperação e aproximar o standby do ponto atual no tempo.
 
-## 7. Enable Broker
+## 7. Habilitar o Broker
 
 Nos dois bancos:
 
@@ -327,7 +325,7 @@ DGMGRL> SHOW CONFIGURATION;
 DGMGRL> ENABLE CONFIGURATION;
 ```
 
-## 8. Validate the Environment
+## 8. Validar o Ambiente
 
 Verifique o papel e o modo de abertura de cada banco:
 
@@ -358,7 +356,7 @@ DGMGRL> SHOW CONFIGURATION;
 DGMGRL> SHOW DATABASE DBORCL_DG1;
 ```
 
-## 9. Configure Archive Retention
+## 9. Configurar a Política de Retenção de Archives
 
 No `RMAN`, configure a política para apagar `archivelogs` apenas depois de aplicados no standby:
 
@@ -366,7 +364,7 @@ No `RMAN`, configure a política para apagar `archivelogs` apenas depois de apli
 CONFIGURE ARCHIVELOG DELETION POLICY TO APPLIED ON STANDBY;
 ```
 
-## 10. Create Application Services
+## 10. Criar Services para a Aplicação
 
 Criar um `application service` ajuda a tornar operações de `switchover` mais transparentes para os clientes.
 
@@ -421,7 +419,7 @@ DBORCL =
  )
 ```
 
-## 11. Administrative Operations
+## 11. Operações Administrativas
 
 ### Switchover
 
@@ -566,7 +564,7 @@ SELECT flashback_on, database_role, open_mode
   FROM v$database;
 ```
 
-## Summary
+## Resumo
 
 Esse fluxo combina rapidez operacional com uma administração mais simples:
 
@@ -575,6 +573,6 @@ Esse fluxo combina rapidez operacional com uma administração mais simples:
 - Gerenciamento centralizado com `Broker`
 - Suporte a operações como `switchover`, `failover`, `reinstate`, `Active Data Guard` e `Snapshot Standby`
 
-## Credits
+## Créditos
 
 Conteúdo estruturado a partir do artigo original de Lilian Barroso Yamaguti, reorganizado aqui em formato de documentação técnica para uso em repositórios GitHub.
