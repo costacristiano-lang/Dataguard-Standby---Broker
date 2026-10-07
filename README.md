@@ -105,11 +105,22 @@ Antes de iniciar, valide:
 
 ```mermaid
 flowchart LR
-    A["PRIMARY<br/>orcldb<br/>OELDG1"] -->|"RMAN Duplicate From Active"| B["PHYSICAL STANDBY<br/>orcldb_dg1<br/>OELDG2"]
-    A -->|"Redo Transport"| B
-    C["DGMGRL / Broker"] --> A
-    C --> B
-    B -->|"Switchover / Failover / Snapshot"| D["Operações de DR"]
+    SRC[("Primary<br/>orcldb / OELDG1")]
+    TGT[("Physical standby<br/>orcldb_dg1 / OELDG2")]
+    subgraph INITIAL["Initial provisioning"]
+        RMAN["RMAN Duplicate<br/>From Active Database"]
+    end
+    subgraph SYNC["Continuous synchronization"]
+        TRANS["Redo transport"]
+        APPLY["Redo Apply"]
+        TRANS --> APPLY
+    end
+    SRC --> RMAN --> TGT
+    SRC --> TRANS
+    APPLY --> TGT
+    BROKER["Data Guard Broker / DGMGRL<br/>validation and role transitions"]
+    BROKER -. "Manage" .-> SRC
+    BROKER -. "Manage" .-> TGT
 ```
 
 ## 1. Prepare the Primary Database
